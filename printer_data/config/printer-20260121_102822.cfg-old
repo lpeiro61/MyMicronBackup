@@ -1,0 +1,608 @@
+# Happy-Hare
+# [include mmu/base/*.cfg]
+# [include mmu/addons/blobifier.cfg]
+# [include mmu/addons/mmu_erec_cutter.cfg]
+# [include mmu/optional/client_macros.cfg]
+
+
+[include mainsail.cfg]
+[include macros.cfg]
+[include sensorless.cfg]
+# [include KAMP_Settings.cfg]
+# [include led_effects.cfg]
+
+[idle_timeout]
+timeout: 3600
+  
+[virtual_sdcard]
+path: /home/biqu/printer_data/gcodes
+on_error_gcode: CANCEL_PRINT
+
+[display_status]
+# [pause_resume]
+
+# Enable object exclusion
+[exclude_object]
+
+# Enable arcs support
+[gcode_arcs]
+resolution: 0.1
+
+[mcu]
+canbus_uuid: 401058209e84
+canbus_interface: can0
+
+[mcu EBB36]
+canbus_uuid: ca5df3894888
+
+[mcu cartographer]
+canbus_uuid: bedf113b4403 
+
+[printer]
+kinematics: corexy
+max_velocity: 150
+max_accel: 5000
+max_z_velocity: 5
+max_z_accel: 350
+square_corner_velocity: 5.0
+
+[temperature_sensor M8P]
+sensor_type: temperature_mcu
+sensor_mcu: mcu
+
+[temperature_sensor CB2]
+sensor_type: temperature_host
+
+[temperature_sensor EBB36]
+sensor_type: temperature_mcu
+sensor_mcu: EBB36
+min_temp: 0
+max_temp: 82
+
+[temperature_sensor Cartographer]
+sensor_type: temperature_mcu
+sensor_mcu: cartographer
+min_temp: 5
+max_temp: 95
+
+[temperature_sensor Chamber]
+sensor_pin: PC5
+sensor_type: Generic 3950
+min_temp: 0
+max_temp: 70
+
+#########################################
+## Extruder
+#########################################
+[extruder]
+step_pin: EBB36: PD0
+dir_pin: EBB36: PD1
+enable_pin: !EBB36: PD2
+gear_ratio: 9:1
+microsteps: 16
+rotation_distance: 47.155
+## Update value above when you perform extruder calibration.
+## If you ask for 100 mm of filament, but in reality it is 98 mm:
+## rotation_distance = (previous rotation_distance) x (actual extrude_distance) / 100.
+## 22.6789511 is a good starting point (not with G2).
+
+full_steps_per_rotation: 200
+nozzle_diameter: 0.400
+filament_diameter: 1.750
+heater_pin: EBB36: PB13
+sensor_pin: EBB36: PA3
+sensor_type: ATC Semitec 104NT-4-R025H42G 
+## Check what thermistor type you have.
+## See https://www.klipper3d.org/Config_Reference.html#common-thermistors for common thermistor types.
+## Use "Generic 3950" for NTC 100k 3950 thermistors.
+
+min_temp: 10
+max_temp:290
+max_power: 0.8
+#control: pid
+#pid_kp: 26.213
+#pid_ki: 1.304
+#pid_kd: 131.721
+
+max_extrude_only_distance: 100.0
+max_extrude_cross_section: 5   # To allow effective purging to possible. (Purge in KAMP).
+
+[tmc2209 extruder]
+uart_pin: EBB36: PA15
+run_current: 0.65
+sense_resistor: 0.11
+stealthchop_threshold: 0
+
+
+#########################################
+## X/Y Steppers
+#########################################
+
+# X stepper (B Motor) - Left
+# Connected to MOTOR_1
+[stepper_x]
+step_pin: PE6
+dir_pin: PE5
+enable_pin: !PC14
+microsteps: 32
+rotation_distance: 32
+full_steps_per_rotation: 200
+endstop_pin: tmc2209_stepper_x:virtual_endstop
+position_endstop: 0 # 175
+position_min: 0
+position_max: 172
+homing_speed: 35
+homing_positive_dir: false # true
+homing_retract_dist: 0
+
+[tmc2209 stepper_x]
+uart_pin: PC13
+diag_pin: PF4
+interpolate: false
+run_current: 0.650
+sense_resistor: 0.110
+stealthchop_threshold: 0
+driver_SGTHRS: 70
+
+# Y stepper (A Motor) - Right
+# Connected to MOTOR_2
+[stepper_y]
+step_pin: PE2
+dir_pin: PE1
+enable_pin: !PE4
+microsteps: 32
+rotation_distance: 32
+full_steps_per_rotation: 200
+endstop_pin: tmc2209_stepper_y:virtual_endstop
+position_endstop: 190
+position_min: 0
+position_max: 190
+homing_speed: 35
+homing_positive_dir: true
+homing_retract_dist: 0
+
+[tmc2209 stepper_y]
+uart_pin: PE3
+diag_pin: PF3
+interpolate: false
+run_current: 0.650
+sense_resistor: 0.110
+stealthchop_threshold: 0
+driver_SGTHRS: 78
+
+
+#########################################
+## Z Steppers
+#########################################
+
+# Z0 Stepper - Front Left
+# Connected to Motor 4
+[stepper_z]
+step_pin: PB4
+dir_pin: PB3
+enable_pin: !PB6
+endstop_pin: ^PF1
+microsteps: 32
+rotation_distance: 32
+endstop_pin: probe: z_virtual_endstop
+gear_ratio: 64:16
+
+## Z-position of nozzle (in mm) to z-endstop trigger point relative to print surface (Z0)
+## (+) value = endstop above Z0, (-) value = endstop below.
+## Increasing position_endstop brings nozzle closer to de bed.
+## After you run Z-ENDSTOP_CALIBRTE, position_endstop will be stored at the very end of your config.
+# position_endstop: 180
+
+position_max: 170
+position_min: -5.0
+homing_speed: 4
+second_homing_speed: 3
+homing_retract_dist: 0
+
+[tmc2209 stepper_z]
+uart_pin: PB5
+interpolate: false
+run_current: 0.6
+sense_resistor: 0.110
+stealthchop_threshold: 0
+
+# Z1 Stepper - Rear Left
+# Connected to Motor 5
+[stepper_z1]
+step_pin: PG13
+dir_pin: !PG12
+enable_pin: !PG15
+microsteps: 32
+rotation_distance: 32
+gear_ratio: 64:16
+
+[tmc2209 stepper_z1]
+uart_pin: PG14
+interpolate: false
+run_current: 0.6
+sense_resistor: 0.110
+stealthchop_threshold: 0
+
+# Z2 Stepper - Rear Right
+# Connected to Motor 6
+[stepper_z2]
+step_pin: PG9
+dir_pin: PD7
+enable_pin: !PG11 
+microsteps: 32
+rotation_distance: 32
+gear_ratio: 64:16
+
+[tmc2209 stepper_z2]
+uart_pin: PG10
+interpolate: false
+run_current: 0.6
+sense_resistor: 0.110
+stealthchop_threshold: 0
+
+# Z3 Stepper - Rear Right
+# Connected to Motor 7
+[stepper_z3]
+step_pin: PD4
+dir_pin: !PD3
+enable_pin: !PD6
+microsteps: 32
+rotation_distance: 32
+gear_ratio: 64:16
+
+[tmc2209 stepper_z3]
+uart_pin: PD5
+interpolate: false
+run_current: 0.6
+sense_resistor: 0.110
+stealthchop_threshold: 0
+
+
+#########################################
+## Bed Heater
+#########################################
+[heater_bed]
+heater_pin: PA1
+sensor_pin: PB1 # THB 
+sensor_type: Generic 3950
+max_power: 0.95
+min_temp: 0
+max_temp: 120
+
+
+########################################
+## PROBE Cartographer
+########################################
+[cartographer]
+mcu: cartographer            
+#   Offsets are measured from the centre of your coil, to the tip of your nozzle 
+#   on a level axis. It is vital that this is accurate. 
+x_offset: 0                          
+#    adjust for your cartographers offset from nozzle to middle of coil
+y_offset: 20                         
+#    adjust for your cartographers offset from nozzle to middle of coil
+# backlash_comp: 0.00774
+#   Backlash compensation distance for removing Z backlash before measuring
+#   the sensor response.
+# sensor: cartographer
+#    this must be set as cartographer unless using IDM etc.
+# sensor_alt: carto
+#    alternate name to call commands. CARTO_TOUCH etc      
+# mesh_runs: 2
+#    Number of passes to make during mesh scan.
+
+
+########################################
+## PROBE boop
+########################################
+# [probe]
+# pin: EBB36:PB6
+# x_offset: 0
+# y_offset: 0
+# #z_offset: 0
+# speed: 4
+# samples: 3
+# samples_result: median
+# sample_retract_dist: 3.0
+# samples_tolerance: 0.006
+# samples_tolerance_retries: 3
+# activate_gcode:
+#     {% set PROBE_TEMP = 150 %}
+#     {% set MAX_TEMP = PROBE_TEMP + 5 %}
+#     {% set ACTUAL_TEMP = printer.extruder.temperature %}
+#     {% set TARGET_TEMP = printer.extruder.target %}
+
+#     {% if TARGET_TEMP > PROBE_TEMP %}
+#         { action_respond_info('Extruder temperature target of %.1fC is too high, lowering to %.1fC' % (TARGET_TEMP, PROBE_TEMP)) }
+#         M109 S{ PROBE_TEMP }
+#     {% else %}
+#         # Temperature target is already low enough, but nozzle may still be too hot.
+#         {% if ACTUAL_TEMP > MAX_TEMP %}
+#             { action_respond_info('Extruder temperature %.1fC is still too high, waiting until below %.1fC' % (ACTUAL_TEMP, MAX_TEMP)) }
+#             TEMPERATURE_WAIT SENSOR=extruder MAXIMUM={ MAX_TEMP }
+#         {% endif %}
+#     {% endif %}
+
+
+########################################
+# Homing and Gantry Adjustment Routines
+########################################
+
+# [idle_timeout]
+# timeout: 1800
+
+[quad_gantry_level]
+speed: 100
+horizontal_move_z: 2
+retries: 5
+retry_tolerance: 0.075
+max_adjust: 10
+
+# Gantry Corners for Micron+ Build
+# Explanation:
+#        z1 ----------------------- z2
+#           |                     |
+#           |     -----------     |
+#           |     |         |     |
+#           |     |   bed   |     |
+#           |     |         |     |
+#           |   0,0 ---------     |
+#           |                     |
+#         z ----------------------- z3
+#               
+# gantry corners:
+#    z pos
+#    z2 pos
+gantry_corners:
+   -60.2,-10.4
+   244.1,234.5
+
+# Probe points with Cartographer3D
+points:
+ 18,6
+ 18,135
+ 155,135
+ 155,6
+
+
+#########################################
+## Input Shaping
+#########################################
+# -- with Cartographer3D_v3 --
+[adxl345]
+cs_pin: cartographer:PA3
+spi_bus: spi1
+
+# -- with EBB36 --
+# [adxl345]
+# cs_pin: EBB36: PB12
+# spi_software_sclk_pin: EBB36: PB10
+# spi_software_mosi_pin: EBB36: PB11
+# spi_software_miso_pin: EBB36: PB2
+# axes_map: x,y,z
+
+[resonance_tester]
+accel_chip: adxl345
+probe_points:
+    # Somewhere slightly above the middle of your print bed
+    86.5,90,20
+
+[input_shaper]
+shaper_type_x = mzv
+shaper_freq_x = 52.2
+shaper_type_y = mzv
+shaper_freq_y = 56
+
+
+#########################################
+## FANS & LEDS & BUZZER
+#########################################
+
+########## Toolhead ##########
+# Part fans
+[fan]
+pin: EBB36: PA0
+
+## Hotend fan
+[heater_fan hotend_fan]
+pin: EBB36: PA1
+heater: extruder
+heater_temp: 50.0
+fan_speed: 0.7
+max_power: 1
+
+## Hotend leds
+[neopixel hotend_led]
+pin: EBB36:PD3
+chain_count: 2
+color_order: GBR
+initial_RED: 0.75
+initial_GREEN: 0.75
+initial_BLUE: 0.75
+
+########## Chamber ##########
+## Chamber leds
+[output_pin daylight]
+pin: PA5
+pwm: true
+value: 0.25
+cycle_time: 0.01
+
+########## Electronic fans ##########
+##--------- Sides fans -----------##
+[multi_pin electronic_fans_pins]
+pins: PF7, PF8
+
+[fan_generic electronic_fans]
+pin=multi_pin:electronic_fans_pins
+max_power: 1
+
+########### Bed fans ###########
+# bed fans
+[fan_generic bed_fans]
+pin: PF6
+max_power: 1
+shutdown_speed: 0.0
+
+# filter fan
+[fan_generic filter_fan]
+pin: PF9
+max_power: 1
+shutdown_speed: 0.0
+
+########### Initial fans speed ###########
+[delayed_gcode start_fan_at_idle_speed]
+initial_duration: 1.0
+gcode:
+  # SET_FAN_SPEED FAN=bed_fans SPEED=0.6
+  # SET_FAN_SPEED FAN=filter_fan SPEED=0.6
+  SET_FAN_SPEED FAN=electronic_fans SPEED=0.75
+  
+############## Buzzer ##############
+# [output_pin buzzer_pin]
+# pin: PE5
+# pwm: false
+# value: 0
+
+
+########################################
+# Aditional sensors
+########################################
+
+[board_pins]
+aliases:
+    # EXP1 header
+    EXP1_1=PE9, EXP1_2=PE10,
+    EXP1_3=PE11, EXP1_4=PE12,
+    EXP1_5=PE13, EXP1_6=PE14,    # Slot in the socket on this side
+    EXP1_7=PE15, EXP1_8=PB10,
+    EXP1_9=<GND>, EXP1_10=<5V>,
+
+    # EXP2 header
+    EXP2_1=PB14, EXP2_2=PB13,
+    EXP2_3=PF7, EXP2_4=PB12,
+    EXP2_5=PE7, EXP2_6=PB11,      # Slot in the socket on this side
+    EXP2_7=PE8, EXP2_8=<RST>,
+    EXP2_9=<GND>, EXP2_10=PC5
+
+
+########################################
+## OTHER
+########################################
+
+#[filament_switch_sensor switch_sensor]
+#switch_pin: EBB36:PB4
+
+#[filament_motion_sensor motion_sensor]
+#switch_pin: ^EBB36:PB3
+
+
+#######################################
+
+################ Z-OFFSET #############
+# with boop
+# -0.500 texturizada
+# -0.650 lisa con efecto
+
+[include moonraker_obico_macros.cfg]
+
+#*# <---------------------- SAVE_CONFIG ---------------------->
+#*# DO NOT EDIT THIS BLOCK OR BELOW. The contents are auto-generated.
+#*#
+#*# [extruder]
+#*# control = pid
+#*# pid_kp = 31.352
+#*# pid_ki = 3.667
+#*# pid_kd = 67.015
+#*#
+#*# [heater_bed]
+#*# control = pid
+#*# pid_kp = 43.815
+#*# pid_ki = 2.028
+#*# pid_kd = 236.600
+#*#
+#*# [probe]
+#*# z_offset = -0.365
+#*#
+#*# [bed_mesh default]
+#*# version = 1
+#*# points =
+#*# 	  0.013582, 0.016132, 0.018547, 0.018674, 0.021212, 0.018674, 0.016132, 0.013582, 0.008480, 0.004711, -0.001630
+#*# 	  -0.006765, -0.001630, 0.000809, 0.003372, 0.000936, -0.001752, -0.006765, -0.006765, -0.009334, -0.011906, -0.014486
+#*# 	  -0.006765, -0.001752, 0.000809, 0.000809, -0.004193, -0.006887, -0.006887, -0.009334, -0.011906, -0.017063, -0.022227
+#*# 	  0.003494, 0.008480, 0.011035, 0.011035, 0.011035, 0.011035, 0.011035, 0.011035, 0.005928, -0.001752, -0.009334
+#*# 	  0.000936, 0.008480, 0.013582, 0.013582, 0.016132, 0.016132, 0.012309, 0.011035, 0.008480, 0.003372, -0.005479
+#*# 	  -0.016940, -0.011906, -0.001752, 0.003372, 0.003372, 0.003494, 0.000936, -0.001630, -0.001752, -0.009334, -0.016940
+#*# 	  -0.019520, -0.011906, -0.004193, 0.000873, 0.000809, -0.004193, -0.004193, -0.006826, -0.014358, -0.022109, -0.027283
+#*# 	  -0.011844, -0.004193, 0.003372, 0.008480, 0.011035, 0.008480, 0.003494, 0.000936, 0.000936, -0.006765, -0.014486
+#*# 	  -0.022109, -0.014422, -0.006765, 0.000809, 0.000936, -0.001630, -0.001752, -0.001630, -0.004193, -0.009334, -0.019644
+#*# 	  -0.045433, -0.037671, -0.032474, -0.029880, -0.027283, -0.029880, -0.028643, -0.029880, -0.029880, -0.035071, -0.040279
+#*# 	  -0.045374, -0.040155, -0.032474, -0.029880, -0.029880, -0.031115, -0.032474, -0.032474, -0.035071, -0.040155, -0.047985
+#*# x_count = 11
+#*# y_count = 11
+#*# mesh_x_pps = 0
+#*# mesh_y_pps = 0
+#*# algo = bicubic
+#*# tension = 0.2
+#*# min_x = 35.0
+#*# max_x = 140.0
+#*# min_y = 30.0
+#*# max_y = 140.0
+#*#
+#*# [bed_mesh first_cold]
+#*# version = 1
+#*# points =
+#*# 	0.002500, 0.008750, 0.007500, -0.005000, -0.010000
+#*# 	-0.005000, -0.001250, 0.015000, 0.010000, -0.030000
+#*# 	-0.017500, 0.012500, 0.000000, -0.025000, -0.022500
+#*# 	-0.038750, -0.015000, -0.027500, -0.045000, -0.051250
+#*# 	-0.056250, -0.026250, -0.035000, -0.015000, -0.032500
+#*# x_count = 5
+#*# y_count = 5
+#*# mesh_x_pps = 2
+#*# mesh_y_pps = 2
+#*# algo = bicubic
+#*# tension = 0.2
+#*# min_x = 40.0
+#*# max_x = 140.0
+#*# min_y = 40.0
+#*# max_y = 140.0
+#*#
+#*# [cartographer]
+#*# mode = touch
+#*# scanner_touch_threshold = 1250
+#*# scanner_touch_speed = 3
+#*# scanner_touch_z_offset = 0.000
+#*#
+#*# [cartographer model default]
+#*# model_coef = 1.5151276393755648,
+#*# 	1.839606110506681,
+#*# 	0.791058349448309,
+#*# 	0.31821512989523676,
+#*# 	0.2146532419833903,
+#*# 	0.4270027961300938,
+#*# 	-0.026919482940188363,
+#*# 	-0.38117794666723726,
+#*# 	0.15749024230207861,
+#*# 	0.24845800184723169
+#*# model_domain = 3.2243763449232913e-07,3.343593361678127e-07
+#*# model_range = 0.200417,5.100417
+#*# model_temp = 44.203639
+#*# model_offset = 0.00000
+#*# model_mode = touch
+#*# model_fw_version = CARTOGRAPHER 5.0.0
+#*#
+#*# [cartographer scan_model default]
+#*# coefficients = 1.4467843149531305,1.9409501657892418,0.7745987831954368,0.18912894264878746,0.7198115573393273,1.2172730136547616,-0.6938131040908587,-1.3636618433611924,0.5501747128723811,0.717654632674217
+#*# domain = 3.199824442005016e-07,3.34264777829005e-07
+#*# z_offset = 0
+#*# reference_temperature = 20.91
+#*# software_version = 1.3.3
+#*# mcu_version = CARTOGRAPHER 5.0.0
+#*#
+#*# [cartographer touch_model default]
+#*# threshold = 5500
+#*# speed = 2.0
+#*# z_offset = 0
+#*# software_version = 1.3.3
+#*# mcu_version = CARTOGRAPHER 5.0.0
